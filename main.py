@@ -14,11 +14,11 @@ class MusicApp(QWidget):
         super().__init__()
         self.setFixedWidth(800)
         self.setFixedHeight(400)
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint)
         self.setStyleSheet(
             """
             * {background: #111;}
-            QPushButton { 
+            QPushButton {
             background: '#f0f0f0';
             border-radius: 20px;
             min-width: 40px;
@@ -31,18 +31,18 @@ class MusicApp(QWidget):
             QPushButton:pressed {
             background: '#f0f0f0';
             }
-            
+
             QLabel {
             color: white;
             }
-            
+
             QListWidget {
             background: #1e1e1e;
             color: #ffffff;
             border: none;
             border-radius: 6px;
             }
-            
+
             QPixmap {
             min-width: 20px;
             }
@@ -55,35 +55,35 @@ class MusicApp(QWidget):
         self.btn_play_pause = QPushButton('', self)
         self.btn_play_pause.setIcon(QIcon('images/play-fill.png'))
         self.btn_play_pause.setIconSize(QtCore.QSize(30, 30))
-        self.btn_play_pause.setCursor(QtCore.Qt.PointingHandCursor)
+        self.btn_play_pause.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.btn_play_pause.clicked.connect(self.play_pause)
         self.btn_play_pause.move(390, 325)
 
         # Exit button
         self.icon_exit = qta.icon('mdi.close', color='#ffffff', color_selected='#ffffff', scale_factor=2)
         self.btn_exit = QPushButton(self.icon_exit, '', self)
-        self.btn_exit.setCursor(QtCore.Qt.PointingHandCursor)
+        self.btn_exit.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.btn_exit.clicked.connect(exit)
         self.btn_exit.setStyleSheet("background: '#111';")
         self.btn_exit.move(750, 10)
 
         self.icon_minimize = qta.icon('mdi.window-minimize', color='#ffffff', scale_factor=2)
         self.btn_minimize = QPushButton(self.icon_minimize, '', self)
-        self.btn_minimize.setCursor(QtCore.Qt.PointingHandCursor)
+        self.btn_minimize.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.btn_minimize.clicked.connect(self.showMinimized)
         self.btn_minimize.setStyleSheet("background: '#111';")
         self.btn_minimize.move(710, 13)
 
         self.icon_rewind = qta.icon('mdi.skip-previous', color='#ffffff', scale_factor=2)
         self.btn_rewind = QPushButton(self.icon_rewind, '', self)
-        self.btn_rewind.setCursor(QtCore.Qt.PointingHandCursor)
+        self.btn_rewind.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.btn_rewind.clicked.connect(self.rewind)
         self.btn_rewind.setStyleSheet("background: #111;")
         self.btn_rewind.move(340, 324)
 
         self.icon_forward = qta.icon('mdi.skip-next', color='#ffffff', scale_factor=2)
         self.btn_forward = QPushButton(self.icon_forward, '', self)
-        self.btn_forward.setCursor(QtCore.Qt.PointingHandCursor)
+        self.btn_forward.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         self.btn_forward.clicked.connect(self.skip)
         self.btn_forward.setStyleSheet("background: #111;")
         self.btn_forward.move(440, 324)
@@ -115,10 +115,10 @@ class MusicApp(QWidget):
         self.song_title_lbl = QLabel('song', self)
         self.song_title_lbl.move(50, 332)
 
-        self.volume_slider = QSlider(QtCore.Qt.Horizontal, self)
+        self.volume_slider = QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self.volume_slider.setMinimum(0)
         self.volume_slider.setMaximum(100)
-        self.volume_slider.setValue(60)
+        self.volume_slider.setValue(40)
         self.volume_slider.setStyleSheet(
             """
             QSlider::groove:horizontal {
@@ -131,12 +131,12 @@ class MusicApp(QWidget):
             margin: -2px 0;
             border-radius: 7px;
             }
-            
+
             QSlider::add-page:horizontal {
             background: #555;
             margin: 2px 0;
             }
-            
+
             QSlider::sub-page:horizontal {
             background: white;
             margin: 2px 0;
@@ -145,8 +145,19 @@ class MusicApp(QWidget):
         self.volume_slider.valueChanged.connect(self.volume)
         self.volume_slider.move(675, 335)
 
+        self.current_volume = ''
+
+        self.icon_mute = qta.icon('mdi.volume-variant-off', color='#999', scale_factor=1.5)
+        self.icon_volume_high = qta.icon('mdi.volume-high', color='white', scale_factor=1.5)
+        self.icon_volume_medium = qta.icon('mdi.volume-medium', color='white', scale_factor=1.5)
+        self.btn_volume = QPushButton('', self)
+        self.btn_volume.clicked.connect(self.mute_unmute)
+        self.btn_volume.setIcon(self.icon_volume_medium)
+        self.btn_volume.setStyleSheet('background: #111;')
+        self.btn_volume.move(620, 322)
+
         mixer.init()
-        mixer_music.set_volume(0.6)
+        mixer_music.set_volume(0.4)
 
         # self.duration = QSlider(QtCore.Qt.Horizontal, self)
         # self.duration.setRange(0, 0)
@@ -230,6 +241,23 @@ class MusicApp(QWidget):
 
     def volume(self):
         mixer_music.set_volume(self.volume_slider.value()/100)
+        self.current_volume = mixer_music.get_volume()
+        if mixer_music.get_volume() == 0:
+            self.btn_volume.setIcon(self.icon_mute)
+        elif 0 < mixer_music.get_volume() < 0.5:
+            self.btn_volume.setIcon(self.icon_volume_medium)
+        elif mixer_music.get_volume() >= 0.5:
+            self.btn_volume.setIcon(self.icon_volume_high)
+
+    def mute_unmute(self):
+        if mixer_music.get_volume() != 0:
+            mixer_music.set_volume(0)
+            self.volume_slider.setValue(0)
+            self.btn_volume.setIcon(self.icon_mute)
+        else:
+            mixer_music.set_volume(0.4)
+            self.volume_slider.setValue(40)
+            self.btn_volume.setIcon(self.icon_volume_medium)
 
     def artist_song(self, x):
         tag = TinyTag.get(x)
